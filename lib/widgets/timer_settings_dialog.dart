@@ -5,7 +5,9 @@ class TimerSettingsDialog extends StatefulWidget {
   final int breakDuration;
   final int totalRounds;
   final bool autoStartBreak;
-  final Function(int workMinutes, int breakMinutes, int rounds, bool autoBreak) onSave;
+  final bool autoStartRounds;
+  final Function(int workMinutes, int breakMinutes, int rounds, bool autoBreak, bool autoRounds)
+  onSave;
 
   const TimerSettingsDialog({
     super.key,
@@ -13,6 +15,7 @@ class TimerSettingsDialog extends StatefulWidget {
     required this.breakDuration,
     required this.totalRounds,
     required this.autoStartBreak,
+    required this.autoStartRounds,
     required this.onSave,
   });
 
@@ -25,14 +28,22 @@ class _TimerSettingsDialogState extends State<TimerSettingsDialog> {
   late TextEditingController _breakController;
   late TextEditingController _roundsController;
   late bool _autoStartBreak;
+  late bool _autoStartRounds;
 
   @override
   void initState() {
     super.initState();
-    _workController = TextEditingController(text: (widget.workDuration ~/ 60).toString());
-    _breakController = TextEditingController(text: (widget.breakDuration ~/ 60).toString());
-    _roundsController = TextEditingController(text: widget.totalRounds.toString());
+    _workController = TextEditingController(
+      text: (widget.workDuration ~/ 60).toString(),
+    );
+    _breakController = TextEditingController(
+      text: (widget.breakDuration ~/ 60).toString(),
+    );
+    _roundsController = TextEditingController(
+      text: widget.totalRounds.toString(),
+    );
     _autoStartBreak = widget.autoStartBreak;
+    _autoStartRounds = widget.autoStartRounds;
   }
 
   @override
@@ -44,13 +55,17 @@ class _TimerSettingsDialogState extends State<TimerSettingsDialog> {
         children: [
           TextField(
             controller: _workController,
-            decoration: const InputDecoration(labelText: 'Work Duration (minutes)'),
+            decoration: const InputDecoration(
+              labelText: 'Work Duration (minutes)',
+            ),
             keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _breakController,
-            decoration: const InputDecoration(labelText: 'Break Duration (minutes)'),
+            decoration: const InputDecoration(
+              labelText: 'Break Duration (minutes)',
+            ),
             keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 16),
@@ -70,6 +85,16 @@ class _TimerSettingsDialogState extends State<TimerSettingsDialog> {
               ),
             ],
           ),
+          Row(
+            children: [
+              const Text('Auto-start next round'),
+              const Spacer(),
+              Switch(
+                value: _autoStartRounds,
+                onChanged: (value) => setState(() => _autoStartRounds = value),
+              ),
+            ],
+          ),
         ],
       ),
       actions: [
@@ -82,7 +107,7 @@ class _TimerSettingsDialogState extends State<TimerSettingsDialog> {
             final workMinutes = int.tryParse(_workController.text) ?? 25;
             final breakMinutes = int.tryParse(_breakController.text) ?? 5;
             final rounds = int.tryParse(_roundsController.text) ?? 4;
-            widget.onSave(workMinutes, breakMinutes, rounds, _autoStartBreak);
+            widget.onSave(workMinutes, breakMinutes, rounds, _autoStartBreak, _autoStartRounds);
             Navigator.pop(context);
           },
           child: const Text('Save'),

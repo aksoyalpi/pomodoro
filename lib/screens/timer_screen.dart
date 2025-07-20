@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 import '../widgets/timer_display.dart';
 import '../widgets/timer_controls.dart';
 import '../widgets/quran_verse.dart';
@@ -31,7 +32,10 @@ class TimerScreenState extends State<TimerScreen>
 
   static int totalRounds = 4;
   int _completedRounds = 0;
-  bool _autoStartBreak = false;
+  bool _autoStartBreak = true;
+  bool _autoStartRounds = false;
+
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
@@ -63,14 +67,8 @@ class TimerScreenState extends State<TimerScreen>
           ),
         );
 
-    _verseOpacityAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
+    _verseOpacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
     _timerOpacityAnimation = Tween<double>(begin: 1.0, end: 0.6).animate(
@@ -82,6 +80,7 @@ class TimerScreenState extends State<TimerScreen>
   void dispose() {
     _timer.cancel();
     _animationController.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -98,6 +97,12 @@ class TimerScreenState extends State<TimerScreen>
     });
   }
 
+  void _playSound(bool isWorkEnd) async {
+    await _audioPlayer.play(
+      AssetSource(isWorkEnd ? 'sounds/work_end.mp3' : 'sounds/break_end.mp3'),
+    );
+  }
+
   void _timerCallback(Timer timer) {
     setState(() {
       if (_secondsRemaining > 0) {
@@ -105,6 +110,7 @@ class TimerScreenState extends State<TimerScreen>
       } else {
         _timer.cancel();
         if (_isWorkTime) {
+          _playSound(true);
           _completedRounds++;
           if (_autoStartBreak) {
             _isWorkTime = false;
@@ -117,10 +123,17 @@ class TimerScreenState extends State<TimerScreen>
             _animationController.reverse();
           }
         } else {
-          _isRunning = false;
-          _isWorkTime = true;
-          _secondsRemaining = workDuration;
-          _animationController.reverse();
+          _playSound(false);
+          if (_autoStartRounds && _completedRounds < totalRounds) {
+            _isWorkTime = true;
+            _secondsRemaining = workDuration;
+            _timer = Timer.periodic(const Duration(seconds: 1), _timerCallback);
+          } else {
+            _isRunning = false;
+            _isWorkTime = true;
+            _secondsRemaining = workDuration;
+            _animationController.reverse();
+          }
         }
       }
     });
@@ -146,12 +159,14 @@ class TimerScreenState extends State<TimerScreen>
         breakDuration: breakDuration,
         totalRounds: totalRounds,
         autoStartBreak: _autoStartBreak,
-        onSave: (workMinutes, breakMinutes, rounds, autoBreak) {
+        autoStartRounds: _autoStartRounds,
+        onSave: (workMinutes, breakMinutes, rounds, autoBreak, autoRounds) {
           setState(() {
             workDuration = workMinutes * 60;
             breakDuration = breakMinutes * 60;
             totalRounds = rounds;
             _autoStartBreak = autoBreak;
+            _autoStartRounds = autoRounds;
             _secondsRemaining = _isWorkTime ? workDuration : breakDuration;
           });
         },
@@ -169,7 +184,9 @@ class TimerScreenState extends State<TimerScreen>
             children: [
               // Timer Section
               Positioned(
-                top: MediaQuery.of(context).size.height * _timerPositionAnimation.value,
+                top:
+                    MediaQuery.of(context).size.height *
+                    _timerPositionAnimation.value,
                 left: 0,
                 right: 0,
                 child: Opacity(
@@ -188,13 +205,15 @@ class TimerScreenState extends State<TimerScreen>
                       const SizedBox(height: 20),
                       GestureDetector(
                         onTap: _showSettings,
-                        child: TimerDisplay(secondsRemaining: _secondsRemaining),
+                        child: TimerDisplay(
+                          secondsRemaining: _secondsRemaining,
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
-              
+
               // Verse Section (Always centered)
               Positioned(
                 top: MediaQuery.of(context).size.height * 0.4,
@@ -205,10 +224,12 @@ class TimerScreenState extends State<TimerScreen>
                   child: const Center(child: QuranVerse()),
                 ),
               ),
-              
+
               // Controls Section
               Positioned(
-                top: MediaQuery.of(context).size.height * _controlsPositionAnimation.value,
+                top:
+                    MediaQuery.of(context).size.height *
+                    _controlsPositionAnimation.value,
                 left: 0,
                 right: 0,
                 child: TimerControls(
