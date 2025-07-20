@@ -12,9 +12,11 @@ class TimerDisplay extends StatelessWidget {
     
     return Text(
       '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 80,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w300,
+        letterSpacing: 4,
+        color: Theme.of(context).colorScheme.primary,
       ),
     );
   }

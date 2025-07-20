@@ -177,6 +177,7 @@ class TimerScreenState extends State<TimerScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: AnimatedBuilder(
         animation: _animationController,
         builder: (context, child) {
@@ -189,39 +190,67 @@ class TimerScreenState extends State<TimerScreen>
                     _timerPositionAnimation.value,
                 left: 0,
                 right: 0,
-                child: Opacity(
-                  opacity: _timerOpacityAnimation.value,
-                  child: Column(
-                    children: [
-                      RoundIndicators(
-                        totalRounds: totalRounds,
-                        completedRounds: _completedRounds,
+                child: GestureDetector(
+                  onTap: _isRunning ? null : _showSettings,
+                  child: Opacity(
+                    opacity: _timerOpacityAnimation.value,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _isWorkTime ? 'Work Time' : 'Break Time',
-                        style: Theme.of(context).textTheme.headlineSmall,
+                      child: Column(
+                        children: [
+                          RoundIndicators(
+                            totalRounds: totalRounds,
+                            completedRounds: _completedRounds,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            _isWorkTime ? 'Work Time' : 'Break Time',
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                          ),
+                          const SizedBox(height: 20),
+                          TimerDisplay(secondsRemaining: _secondsRemaining),
+                        ],
                       ),
-                      const SizedBox(height: 20),
-                      GestureDetector(
-                        onTap: _showSettings,
-                        child: TimerDisplay(
-                          secondsRemaining: _secondsRemaining,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
 
               // Verse Section (Always centered)
               Positioned(
-                top: MediaQuery.of(context).size.height * 0.4,
-                left: 0,
-                right: 0,
-                child: Opacity(
+                top:
+                    MediaQuery.of(context).size.height *
+                    0.45, // Changed from 0.4 to 0.45
+                left: 24,
+                right: 24,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 500),
                   opacity: _verseOpacityAnimation.value,
-                  child: const Center(child: QuranVerse()),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surface.withOpacity(0.7),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: const Center(child: QuranVerse()),
+                  ),
                 ),
               ),
 
@@ -232,10 +261,13 @@ class TimerScreenState extends State<TimerScreen>
                     _controlsPositionAnimation.value,
                 left: 0,
                 right: 0,
-                child: TimerControls(
-                  isRunning: _isRunning,
-                  onStartStop: _toggleTimer,
-                  onReset: _resetTimer,
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  child: TimerControls(
+                    isRunning: _isRunning,
+                    onStartStop: _toggleTimer,
+                    onReset: _resetTimer,
+                  ),
                 ),
               ),
             ],
